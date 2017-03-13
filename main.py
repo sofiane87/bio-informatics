@@ -165,7 +165,6 @@ names = np.array(names)[randPerm]
 sequences = np.array(sequences)[randPerm]
 lengthArray = np.array(lengthArray)[randPerm]
 sequenceList = lengthArray[np.argsort(-lengthArray)]
-lengthArrayIndex = argsort(lengthArray)
 
 
 if bagging:
