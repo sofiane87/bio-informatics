@@ -241,9 +241,9 @@ if rnn:
 		np.save(numpyDataPath + 'tooLong_tags', tooLong_tags)
 		np.save(numpyDataPath + 'tooLong_length', tooLong_length)
 	else:
-		train_set = np.load('train_set.npy')
-		train_tags = np.load('train_tags.npy')
-		train_length = np.load('train_length.npy')
+		train_set = np.load(numpyDataPath + 'train_set.npy')
+		train_tags = np.load(numpyDataPath + 'train_tags.npy')
+		train_length = np.load(numpyDataPath + 'train_length.npy')
 
 		dev_set = np.load(numpyDataPath + 'dev_set.npy')
 		dev_tags = np.load(numpyDataPath + 'dev_tags.npy')
