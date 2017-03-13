@@ -200,7 +200,7 @@ if rnn:
 
 	print('PRE-PROCESSING : ')
 
-	if not(os.path.exists((numpyDataPath + 'dev_set.npy'))
+	if not(os.path.exists((numpyDataPath + 'dev_set.npy')):
 		tooLong_set = sequences[np.argsort(-lengthArray)[:2]]
 		tooLong_length = lengthArray[np.argsort(-lengthArray)[:2]]
 		tooLong_tags = tags[np.argsort(-lengthArray)[:2]]
