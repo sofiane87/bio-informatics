@@ -103,7 +103,7 @@ else :
 
 
 if not('-bs' in args): ## -bs :  Batch size 
-	batchSize = 300
+	batchSize = 100
 else : 
 	batchSize = int(args[args.index('-bs') + 1])
 
@@ -165,7 +165,7 @@ names = np.array(names)[randPerm]
 sequences = np.array(sequences)[randPerm]
 lengthArray = np.array(lengthArray)[randPerm]
 sequenceList = lengthArray[np.argsort(-lengthArray)]
-
+lengthArrayIndex = argsort(lengthArray)
 
 
 if bagging:
@@ -363,14 +363,17 @@ if rnn:
 		else :
 			print('TRAINING THE MODEL')
 			initialEpoch = 0
+		initialIndex = 0
 		for epoch in range(initialEpoch,numberOfEpochs):
 			for i in range(int(np.ceil(train_set.shape[0]/batchSize))):
-				batch_xs = np.array(train_set[i*batchSize:min((i+1)*batchSize,train_set.shape[0])])
-				batch_ys = np.array(train_tags[i*batchSize:min((i+1)*batchSize,train_tags.shape[0])])
 				batch_lengths = np.array(train_length[i*batchSize:min((i+1)*batchSize,train_length.shape[0])])
+				maxLength = np.max(batch_lengths)
+				batch_xs = np.array(train_set[i*batchSize:min((i+1)*batchSize,train_set.shape[0])])[:maxLength]
+				batch_ys = np.array(train_tags[i*batchSize:min((i+1)*batchSize,train_tags.shape[0])])[:maxLength]
 				sess.run(train_step, feed_dict={x: batch_xs, y_:batch_ys, lengths:batch_lengths})
+			
 			test_cross_entropy, test_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: dev_set, y_: dev_tags, lengths:dev_length})
-			train_cross_entropy, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: train_set, y_: train_tags, lengths: train_length})
+			#train_cross_entropy, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: train_set, y_: train_tags, lengths: train_length})
 			results[epoch] = [test_cross_entropy, test_accuracy,train_cross_entropy, train_accuracy]
 			printResults(results, epoch)
 			if (test_errorRate >= 1- test_accuracy):
