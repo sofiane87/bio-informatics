@@ -211,7 +211,7 @@ if rnn:
 		lengthArray = lengthArray[np.argsort(-lengthArray)[2:]]
 
 		## Train
-		Sequence_train = np.full([seqLength,max(lengthArray)],-1)
+		Sequence_train = np.full([seqLength-2,max(lengthArray)],-1)
 		print('Sequence_train size : ', Sequence_train.shape)
 		for i in range(len(sequences)):
 			if i % 1000 == 0:
@@ -253,6 +253,11 @@ if rnn:
 		tooLong_tags = np.load(numpyDataPath + 'tooLong_tags.npy')
 		tooLong_length = np.load(numpyDataPath + 'tooLong_length.npy')		
  	########################### BUILDING THE MODEL ###############################################
+
+	print(train_set.shape)
+	print(train_tags.shape)
+	print(train_length.shape)
+
 
 	print('BUILDING THE MODEL :' + stacked_text + rnn_cell)
 
@@ -358,11 +363,6 @@ if rnn:
 		else :
 			print('TRAINING THE MODEL')
 			initialEpoch = 0
-
-		print(train_set.shape[0])
-		print(train_tags.shape[0])
-		print(train_length.shape[0])
-
 		for epoch in range(initialEpoch,numberOfEpochs):
 			for i in range(int(np.ceil(train_set.shape[0]/batchSize))):
 				batch_xs = np.array(train_set[i*batchSize:min((i+1)*batchSize,train_set.shape[0])])
