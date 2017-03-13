@@ -245,13 +245,13 @@ if rnn:
 		train_tags = np.load('train_tags.npy')
 		train_length = np.load('train_length.npy')
 
-		dev_set = np.load('dev_set.npy')
-		dev_tags = np.load('dev_tags.npy')
-		dev_length = np.load('dev_length.npy')
+		dev_set = np.load(numpyDataPath + 'dev_set.npy')
+		dev_tags = np.load(numpyDataPath + 'dev_tags.npy')
+		dev_length = np.load(numpyDataPath + 'dev_length.npy')
 
-		tooLong_set = np.load('tooLong_set.npy')
-		tooLong_tags = np.load('tooLong_tags.npy')
-		tooLong_length = np.load('tooLong_length.npy')		
+		tooLong_set = np.load(numpyDataPath + 'tooLong_set.npy')
+		tooLong_tags = np.load(numpyDataPath + 'tooLong_tags.npy')
+		tooLong_length = np.load(numpyDataPath + 'tooLong_length.npy')		
  	########################### BUILDING THE MODEL ###############################################
 
 	print('BUILDING THE MODEL :' + stacked_text + rnn_cell)
