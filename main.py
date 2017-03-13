@@ -253,8 +253,8 @@ if rnn:
 		tooLong_length = np.load(numpyDataPath + 'tooLong_length.npy')		
  	########################### BUILDING THE MODEL ###############################################
 
- 	lengthTrainSet = np.sort(np.array(list(set(train_length))))
- 	lengthDevSet = np.sort(np.array(list(set(dev_length))))
+	lengthTrainSet = np.sort(np.array(list(set(train_length))))
+	lengthDevSet = np.sort(np.array(list(set(dev_length))))
 
 	print('BUILDING THE MODEL :' + stacked_text + rnn_cell)
 
@@ -380,7 +380,7 @@ if rnn:
 
 			test_accuracy = test_accuracy / len(dev_length)
 			test_cross_entropy = test_cross_entropy / len(dev_length)
-			
+
 			#train_cross_entropy, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: train_set, y_: train_tags, lengths: train_length})
 			train_cross_entropy = 0
 			train_accuracy = 0
