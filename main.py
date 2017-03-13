@@ -253,10 +253,8 @@ if rnn:
 		tooLong_length = np.load(numpyDataPath + 'tooLong_length.npy')		
  	########################### BUILDING THE MODEL ###############################################
 
-	print(train_set.shape)
-	print(train_tags.shape)
-	print(train_length.shape)
-
+ 	lengthTrainSet = np.sort(np.array(list(set(train_length))))
+ 	lengthDevSet = np.sort(np.array(list(set(dev_length))))
 
 	print('BUILDING THE MODEL :' + stacked_text + rnn_cell)
 
@@ -364,15 +362,28 @@ if rnn:
 			initialEpoch = 0
 		initialIndex = 0
 		for epoch in range(initialEpoch,numberOfEpochs):
-			for i in range(int(np.ceil(train_set.shape[0]/batchSize))):
-				batch_lengths = np.array(train_length[i*batchSize:min((i+1)*batchSize,train_length.shape[0])])
-				maxLength = np.max(batch_lengths)
-				batch_xs = np.array(train_set[i*batchSize:min((i+1)*batchSize,train_set.shape[0])])[:maxLength]
-				batch_ys = np.array(train_tags[i*batchSize:min((i+1)*batchSize,train_tags.shape[0])])[:maxLength]
+			for lengthValue in lengthTrainSet:
+				batch_lengths = train_length[train_length == lengthValue]
+				batch_xs = train_set[train_length == lengthValue,:lengthValue]
+				batch_ys = train_tags[train_length == lengthValue,:lengthValue]
 				sess.run(train_step, feed_dict={x: batch_xs, y_:batch_ys, lengths:batch_lengths})
 			
-			test_cross_entropy, test_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: dev_set, y_: dev_tags, lengths:dev_length})
+			test_cross_entropy = 0
+			test_accuracy = 0
+			for lengthValue in lengthDevSet:
+				batch_lengths = dev_length[dev_length == lengthValue]
+				batch_xs = dev_set[dev_length == lengthValue,:lengthValue]
+				batch_ys = dev_tags[dev_length == lengthValue,:lengthValue]
+				temp_test_cross_entropy, temp_test_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: batch_xs, y_:batch_ys, lengths:batch_lengths}) 
+				test_cross_entropy += temp_test_cross_entropy * np.sum((dev_length == lengthValue).astype(int))
+				test_accuracy += temp_test_accuracy * np.sum((dev_length == lengthValue).astype(int))
+
+			test_accuracy = test_accuracy / len(dev_length)
+			test_cross_entropy = test_cross_entropy / len(dev_length)
+			
 			#train_cross_entropy, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: train_set, y_: train_tags, lengths: train_length})
+			train_cross_entropy = 0
+			train_accuracy = 0
 			results[epoch] = [test_cross_entropy, test_accuracy,train_cross_entropy, train_accuracy]
 			printResults(results, epoch)
 			if (test_errorRate >= 1- test_accuracy):
