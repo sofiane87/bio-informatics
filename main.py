@@ -22,8 +22,8 @@ def printResults(results,index):
 
 	for i in range(index+1):
 		print('------------- EPOCH : ' + str(i) + ' ------------' )
-		print('Test-loss : %.4f' + %(results[i][0]) + ' - Test-Accuracy %.4f' + %(results[i][1]) )
-		print('Train-loss : %.4f' + %(results[i][2]) + ' - Train-Accuracy %.4f' + %(results[i][3]) )
+		print('Test-loss : %.4f'  %(results[i][0]) + ' - Test-Accuracy %.4f'  %(results[i][1]) )
+		print('Train-loss : %.4f'  %(results[i][2]) + ' - Train-Accuracy %.4f'  %(results[i][3]) )
 
 ####################### EXTRACTING ARGUMENTS ##########################
 args = sys.argv[1:] ## getting the arguments
@@ -132,6 +132,7 @@ sequences = []
 
 listOfValues = []
 maxSeqLen = 0
+lengthArray = []
 
 index = 0
 for name in dataNames:
@@ -144,6 +145,7 @@ for name in dataNames:
 			tagArray = np.zeros(len(dataNames))
 			tagArray[index] = 1
 			tags.append(tagArray)
+			lengthArray.append(len(sequence))
 			###
 			listOfValues = list(set(listOfValues).union(set(sequence)))
 			maxSeqLen = max(maxSeqLen, len(sequence))
@@ -152,13 +154,17 @@ for name in dataNames:
 print('Number of Amino Acids possible : ', len(listOfValues))
 print('Number of Samples : ', len(sequences))
 print('Maximum Sequence Length : ', maxSeqLen)
-
+print('Number Of Different lengths : ', len(set(lengthArray)))
 print('Shuffling the data : ')
+
+
 seqLength =len(sequences)
 randPerm = np.random.permutation(range(0,seqLength))
 tags = np.array(tags)[randPerm]
 names = np.array(names)[randPerm]
 sequences = np.array(sequences)[randPerm]
+lengthArray = np.array(lengthArray)[randPerm]
+sequenceList = lengthArray[np.argsort(-lengthArray)]
 
 
 
@@ -182,31 +188,80 @@ if bagging:
 	accuracy = np.mean(np.array(predicted_tags.argmax(axis=1) == dev_tags.argmax(axis=1)).astype(int))
 	print('ACCURACY : ', accuracy )
 
+
+
 if rnn:
 	############################ Preprocessing The Data ####################################
 
 
 	print('RUNNING RNN MODEL : ', rnn_cell)
 
+	numpyDataPath = dataPath + 'rnn' + os.path.sep + 'Preprocessing' + os.path.sep
+
 	print('PRE-PROCESSING : ')
-	
-	Seuence_train = np.array([[listOfValues.index(sequences[j][e]) for e in range(len(sequences[j]))] for j in range(len(sequences))])
-	train_set = Seuence_train[:-222]
-	train_tags = tags[:-222]
 
-	dev_set = full_bag[-222:]
-	dev_tags = tags[-222:]
+	if not(os.path.exists((numpyDataPath + 'dev_set.npy'))
+		tooLong_set = sequences[np.argsort(-lengthArray)[:2]]
+		tooLong_length = lengthArray[np.argsort(-lengthArray)[:2]]
+		tooLong_tags = tags[np.argsort(-lengthArray)[:2]]
 
+		## Shortened
+		sequences =  sequences[np.argsort(-lengthArray)[2:]]
+		lengthArray = lengthArray[np.argsort(-lengthArray)[2:]]
+		tags = tags[np.argsort(-lengthArray)[2:]]
 
+		## Train
+		Sequence_train = np.full([seqLength,max(lengthArray)],-1)
+		print('Sequence_train size : ', Sequence_train.shape)
+		for i in range(len(sequences)):
+			if i % 1000 == 0:
+				print('Sample : ', i)
+			Sequence_train[i,:len(sequences[i])] = [listOfValues.index(sequences[i][e]) for e in range(len(sequences[i]))]
+		train_set = Sequence_train[:-220]
+		train_tags = tags[:-220]
+		train_length =lengthArray[:-220]
+
+		## Dev Set
+		dev_set = Sequence_train[-220:]
+		dev_tags = tags[-220:]
+		dev_length = lengthArray[-220:]
+
+		if not(os.path.exists(numpyDataPath)):
+			os.makedirs(numpyDataPath)
+
+		np.save(numpyDataPath + 'train_set', train_set)
+		np.save(numpyDataPath + 'train_tags', train_tags)
+		np.save(numpyDataPath + 'train_length', train_length)
+
+		np.save(numpyDataPath + 'dev_set', dev_set)
+		np.save(numpyDataPath + 'dev_tags', dev_tags)
+		np.save(numpyDataPath + 'dev_length', dev_length)
+
+		np.save(numpyDataPath + 'tooLong_set', tooLong_set)
+		np.save(numpyDataPath + 'tooLong_tags', tooLong_tags)
+		np.save(numpyDataPath + 'tooLong_length', tooLong_length)
+	else:
+		train_set = np.load('train_set.npy')
+		train_tags = np.load('train_tags.npy')
+		train_length = np.load('train_length.npy')
+
+		dev_set = np.load('dev_set.npy')
+		dev_tags = np.load('dev_tags.npy')
+		dev_length = np.load('dev_length.npy')
+
+		tooLong_set = np.load('tooLong_set.npy')
+		tooLong_tags = np.load('tooLong_tags.npy')
+		tooLong_length = np.load('tooLong_length.npy')		
  	########################### BUILDING THE MODEL ###############################################
 
-	print('BUILDING THE MODEL :' + stacked_text + rnn_text)
+	print('BUILDING THE MODEL :' + stacked_text + rnn_cell)
 
 	## Place Holders
+	class_size = 4
 	x = tf.placeholder(tf.float32, [None, None])
-	y_ = tf.placeholder(tf.float32, [None, None])
+	y_ = tf.placeholder(tf.float32, [None, class_size])
+	lengths = tf.placeholder(tf.int32 , [None])
 	seq_length = tf.shape(x)[1]
-	class_size = tf.shape(y_)[1]
 
 
 	print('RESHAPING THE INPUT : ADDING ONE DIMENSON')
@@ -216,7 +271,7 @@ if rnn:
 
 	######################## RECCURENT LAYER ################################
 
-	print('ADDING ' + stacked_text + rnn_text + ' CELL')
+	print('ADDING ' + stacked_text + rnn_cell + ' CELL')
 
 	if lstm_bool:
 		cell = tf.nn.rnn_cell.LSTMCell(hiddenSize, state_is_tuple=True)
@@ -226,7 +281,7 @@ if rnn:
 	if stacked:
 		cell = tf.nn.rnn_cell.MultiRNNCell([cell] * numberOfLayers)
 
-	full_lstm_out, _ = tf.nn.dynamic_rnn(cell, new_x, dtype=tf.float32)  
+	full_lstm_out, _ = tf.nn.dynamic_rnn(cell, new_x, dtype=tf.float32, sequence_length = lengths)  
 
 	lstm_out = full_lstm_out[:,-1]
 
@@ -307,11 +362,12 @@ if rnn:
 
 		for epoch in range(initialEpoch,numberOfEpochs):
 			for i in range(int(np.ceil(train_set.shape[0]/batchSize))):
-				batch_xs = train_set[i*batchSize:max((i+1)*batchSize,train_set.shape[0])]
-				batch_ys = train_tags[i*batchSize:max((i+1)*batchSize,train_set.shape[0])]
-				sess.run(train_step, feed_dict={x: batch_xs, y_:batch_ys})
-			test_cross_entropy, test_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: dev_set, y_: dev_tags})
-			train_cross_entropy, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: train_set, y_: train_tags})
+				batch_xs = np.array(train_set[i*batchSize:max((i+1)*batchSize,train_set.shape[0])])
+				batch_ys = np.array(train_tags[i*batchSize:max((i+1)*batchSize,train_set.shape[0])])
+				batch_lengths = np.array(train_length[i*batchSize:max((i+1)*batchSize,train_set.shape[0])])
+				sess.run(train_step, feed_dict={x: batch_xs, y_:batch_ys, lengths:batch_lengths})
+			test_cross_entropy, test_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: dev_set, y_: dev_tags, lengths:dev_length})
+			train_cross_entropy, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: train_set, y_: train_tags, lengths: train_length})
 			results[epoch] = [test_cross_entropy, test_accuracy,train_cross_entropy, train_accuracy]
 			printResults(results, epoch)
 			if (test_errorRate >= 1- test_accuracy):
@@ -326,6 +382,6 @@ if rnn:
 	test_cross_entropy, test_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: dev_set, y_: dev_tags})
 	train_cross_entropy, train_accuracy = sess.run([cross_entropy, accuracy], feed_dict={x: train_set, y_: train_tags})
 	print('------------- EPOCH : ' + str(i) + ' ------------' )
-	print('Test-loss : %.4f' + %(test_cross_entropy) + ' - Test-Accuracy %.4f' + %(test_accuracy) )
-	print('Train-loss : %.4f' + %(train_cross_entropy) + ' - Train-Accuracy %.4f' + %(train_accuracy) )
+	print('Test-loss : %.4f'  %(test_cross_entropy) + ' - Test-Accuracy %.4f'  %(test_accuracy) )
+	print('Train-loss : %.4f'  %(train_cross_entropy) + ' - Train-Accuracy %.4f'  %(train_accuracy) )
 
