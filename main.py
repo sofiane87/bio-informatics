@@ -207,8 +207,8 @@ if rnn:
 
 		## Shortened
 		sequences =  sequences[np.argsort(-lengthArray)[2:]]
-		lengthArray = lengthArray[np.argsort(-lengthArray)[2:]]
 		tags = tags[np.argsort(-lengthArray)[2:]]
+		lengthArray = lengthArray[np.argsort(-lengthArray)[2:]]
 
 		## Train
 		Sequence_train = np.full([seqLength,max(lengthArray)],-1)
