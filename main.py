@@ -15,6 +15,9 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from  sklearn.ensemble import RandomForestClassifier as RFC
 import re
+from sklearn.model_selection import GridSearchCV, KFold
+from sklearn.metrics import mean_squared_error, make_scorer
+
 ###################### Useful Paths ##################################
 scriptPath = os.path.realpath(__file__)
 rootPath = os.path.sep.join(scriptPath.split(os.path.sep)[:-1])
@@ -22,6 +25,25 @@ dataPath = rootPath + os.path.sep + 'data' +  os.path.sep
 
 
 ####################### Auxiliary function ###########################
+def RMSE(y, y_pred):
+    return -np.sqrt(mean_squared_error(y, y_pred))
+
+def sklearn_Grid_Search(model, parameters, X, Y):
+    # grid search cross validation
+    GSCV = GridSearchCV(model, parameters, cv=KFold(n_splits=4, shuffle=True, random_state=42), scoring=make_scorer(RMSE))
+    GSCV.fit(X, Y)
+
+    print("Best parameters set found on development set:")
+    print(GSCV.best_params_)
+
+    print("Grid scores on development set:")
+    means = GSCV.cv_results_['mean_test_score']
+    stds = GSCV.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, GSCV.cv_results_['params']):
+        print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+
+    return GSCV
+
 def printResults(results,index):
 	if (platform.system().lower() == 'windows'):
 		os.system('cls')
@@ -158,7 +180,7 @@ lengthArray = np.array(lengthArray)
 
 print('Number Of Folds : ', nFolds)
 
-if not(ridge_option) and not(svm_option):
+if not(ridge_option):
 	alphaValues = [0]
 
 
@@ -191,9 +213,13 @@ for alpha in alphaValues:
 			
 		elif svm_option:
 			#print('SVM - Fold : ', i)
+			param_grid = [
+			  {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+			  {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
+			 ]
 
-			clf = svm.SVC(probability = True, C = 2, gamma = alpha)
-			clf.fit(train_set, train_tags.argmax(axis=1))
+
+			clf = sklearn_Grid_Search(svm.SVC(probability = True), param_grid, train_set, train_tags.argmax(axis=1))
 			
 			predicted_tags = clf.predict(dev_set)
 			train_predicted_tags = clf.predict(train_set)
