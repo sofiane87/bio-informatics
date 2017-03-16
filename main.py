@@ -148,8 +148,8 @@ def loadFastaFiles(fileList):
 def featurize(sequences,setOfAminoAcids,lengthArray):
 	unambiguousAminoAcids = [letter for letter in 'ACDEFGHIKLMNPQRSTVWY']
 	full_seq = np.array([ProteinAnalysis(sequences[j]) for j in range(len(sequences))])
-	initial_seq = np.array([ProteinAnalysis(sequences[j][:100]) for j in range(len(sequences))])
-	final_seq = np.array([ProteinAnalysis(sequences[j][-100:]) for j in range(len(sequences))])
+	initial_seq = np.array([ProteinAnalysis(sequences[j][:50]) for j in range(len(sequences))])
+	final_seq = np.array([ProteinAnalysis(sequences[j][-50:]) for j in range(len(sequences))])
 
 	featurized_sequence = np.zeros([len(sequences), 17+3*len(setOfAminoAcids)])
 	featurized_sequence[:,0] = np.array([len(sequences[j]) for j in range(len(sequences))]) 
@@ -242,8 +242,8 @@ elif svm_option :
 elif rf_option : 
 	classifier = RFC()
 	estimators_range = np.int_(np.linspace(250, 1000, num=4, endpoint=True))
-	min_samples_leaf = np.linspace(0, 20, num=2, endpoint=True)
-	max_features = np.array(list(range(10)))/10
+	min_samples_leaf = np.array(list(range(1, 21)))
+	max_features = np.linspace(0.1, 1.0, num=9, endpoint=True)
 	model_params = {'n_jobs' : [-1], 'n_estimators': estimators_range, 'min_samples_leaf': min_samples_leaf, 'max_features' : max_features}
 
 
