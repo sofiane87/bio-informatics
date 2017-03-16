@@ -60,6 +60,8 @@ def RMSE(y, y_pred):
 def sklearn_Grid_Search(model, parameters, X, Y):
     # grid search cross validation
     GSCV = GridSearchCV(model, parameters, cv=KFold(n_splits=4, shuffle=True, random_state=42), scoring=make_scorer(RMSE))
+    print(X.shape)
+    print(Y.shape)
     GSCV.fit(X, Y)
 
     print("Best parameters set found on development set:")
@@ -111,11 +113,7 @@ def loadFastaFiles(fileList):
 			setOfAminoAcids = list(set(setOfAminoAcids).union(set(sequence)))
 
 
-		secondIndex += 1
-
-		if secondIndex < 20 and (index == 0 or index == 2) : 
-			print(sequence[-50:])
-
+			secondIndex += 1
 
 			## Adding sequqnce name to array
 			names.append(seqName)
@@ -227,7 +225,6 @@ for alpha in alphaValues:
 	elif svm_option:
 		print('gamma = ', alpha)
 	for i in range(nFolds):
-
 		train_set, dev_set, train_tags, dev_tags = train_test_split(featurized_input, tags, test_size=0.25)
 
 
@@ -254,7 +251,8 @@ for alpha in alphaValues:
 #			  {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
 			 ]
 
-
+			print(train_set.shape)
+			print(train_tags.shape)
 			clf = sklearn_Grid_Search(svm.SVC(probability = True), param_grid, train_set, train_tags.argmax(axis=1))
 			
 			predicted_tags = clf.predict(dev_set)
