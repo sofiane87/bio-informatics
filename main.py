@@ -110,7 +110,7 @@ def loadFastaFiles(fileList):
 
 			setOfAminoAcids = list(set(setOfAminoAcids).union(set(sequence)))
 
-			
+
 		secondIndex += 1
 
 		if secondIndex < 20 and (index == 0 or index == 2) : 
@@ -250,8 +250,8 @@ for alpha in alphaValues:
 		elif svm_option:
 			#print('SVM - Fold : ', i)
 			param_grid = [
-			  {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-			  {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
+			  {'C': [1, 10, 100, 1000], 'kernel': ['linear']}
+#			  {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
 			 ]
 
 
