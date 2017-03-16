@@ -16,7 +16,9 @@ from sklearn.model_selection import train_test_split
 from  sklearn.ensemble import RandomForestClassifier as RFC
 import re
 from sklearn.model_selection import GridSearchCV, KFold
-from sklearn.metrics import mean_squared_error, make_scorer
+from sklearn.metrics import mean_squared_error, make_scorer, confusion_matrix
+import matplotlib.pyplot as plt
+import itertools
 
 ###################### Useful Paths ##################################
 scriptPath = os.path.realpath(__file__)
@@ -25,6 +27,33 @@ dataPath = rootPath + os.path.sep + 'data' +  os.path.sep
 
 
 ####################### Auxiliary function ###########################
+def plot_confusion_matrix(cm, classes, normalize=True, title='Confusion matrix', cmap=plt.cm.Blues):
+
+
+
+	if normalize:
+		cm = np.floor((cm.astype('float') / cm.sum(axis=1)[:, np.newaxis])*100).astype(int)/100
+		print("Normalized confusion matrix")
+	else:
+		print('Confusion matrix, without normalization')
+
+	print(cm)
+
+	plt.imshow(cm, interpolation='nearest', cmap=cmap)
+	plt.title(title)
+	plt.colorbar()
+	tick_marks = np.arange(len(classes))
+	plt.xticks(tick_marks, classes, rotation=45)
+	plt.yticks(tick_marks, classes)
+
+	thresh = cm.max() / 2.
+	for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+		plt.text(j, i, cm[i, j], horizontalalignment="center", color="white" if cm[i, j] > thresh else "black")
+
+	plt.tight_layout()
+	plt.ylabel('True label')
+	plt.xlabel('Predicted label')
+
 def RMSE(y, y_pred):
     return -np.sqrt(mean_squared_error(y, y_pred))
 
@@ -81,9 +110,11 @@ def loadFastaFiles(fileList):
 
 			setOfAminoAcids = list(set(setOfAminoAcids).union(set(sequence)))
 
-			# if secondIndex < 20 : 
-			secondIndex += 1
-			# 	print(len(sequence))
+			
+		secondIndex += 1
+
+		if secondIndex < 20 and (index == 0 or index == 2) : 
+			print(sequence[-50:])
 
 
 			## Adding sequqnce name to array
@@ -105,14 +136,19 @@ def loadFastaFiles(fileList):
 
 def featurize(sequences,setOfAminoAcids,lengthArray):
 	unambiguousAminoAcids = [letter for letter in 'ACDEFGHIKLMNPQRSTVWY']
-	featurized_sequence = np.zeros([len(sequences), 7+3*len(setOfAminoAcids)])
-	featurized_sequence[:,1:len(setOfAminoAcids)+1] = np.array([[sequences[j].count(setOfAminoAcids[i])/lengthArray[j] for i in range(len(setOfAminoAcids))] for j in range(len(sequences))]) 
-	featurized_sequence[:,len(setOfAminoAcids)+1:2*len(setOfAminoAcids)+1] =  np.array([[sequences[j][:50].count(setOfAminoAcids[i]) for i in range(len(setOfAminoAcids))] for j in range(len(sequences))]) 
-	featurized_sequence[:,2*len(setOfAminoAcids)+1:3*len(setOfAminoAcids)+1] =  np.array([[sequences[j][-50:].count(setOfAminoAcids[i]) for i in range(len(setOfAminoAcids))] for j in range(len(sequences))]) 
-	featurized_sequence[:,3*len(setOfAminoAcids)+1] = np.array([ProteinAnalysis(sequences[j]).isoelectric_point() for j in range(len(sequences))])
-	featurized_sequence[:,3*len(setOfAminoAcids)+2] = np.array([ProteinAnalysis(sequences[j]).molecular_weight() for j in range(len(sequences))])
-	featurized_sequence[:,3*len(setOfAminoAcids)+3] = np.array([ProteinAnalysis(sequences[j]).aromaticity() for j in range(len(sequences))])
-	featurized_sequence[:,3*len(setOfAminoAcids)+4:3*len(setOfAminoAcids)+7] = np.array([ProteinAnalysis(sequences[j]).secondary_structure_fraction() for j in range(len(sequences))])
+	full_seq = np.array([ProteinAnalysis(sequences[j]) for j in range(len(sequences))])
+	initial_seq = np.array([ProteinAnalysis(sequences[j][:100]) for j in range(len(sequences))])
+	final_seq = np.array([ProteinAnalysis(sequences[j][-100:]) for j in range(len(sequences))])
+
+	featurized_sequence = np.zeros([len(sequences), 8+3*len(setOfAminoAcids)])
+	featurized_sequence[:,1:len(setOfAminoAcids)+1] = np.array([[full_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids] for j in range(len(sequences))]) 
+	featurized_sequence[:,len(setOfAminoAcids)+1:2*len(setOfAminoAcids)+1] =  np.array([[initial_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
+	featurized_sequence[:,2*len(setOfAminoAcids)+1:3*len(setOfAminoAcids)+1] =  np.array([[final_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
+	featurized_sequence[:,3*len(setOfAminoAcids)+1] = np.array([full_seq[j].isoelectric_point() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+2] = np.array([full_seq[j].gravy() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+3] = np.array([full_seq[j].molecular_weight() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+4] = np.array([full_seq[j].aromaticity() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+5:3*len(setOfAminoAcids)+8] = np.array([full_seq[j].secondary_structure_fraction() for j in range(len(sequences))])
 
 	return featurized_sequence
 
@@ -201,13 +237,13 @@ for alpha in alphaValues:
 			ridge_model = ridge(alpha = alpha)
 			ridge_model.fit(train_set,train_tags)
 
-			predicted_tags = ridge_model.predict(dev_set)
+			predicted_tags = ridge_model.predict(dev_set).argmax(axis=1)
 			train_predicted_tags = ridge_model.predict(train_set)
 
 			scores[i] = ridge_model.score(dev_set,dev_tags)
 			train_scores[i] = ridge_model.score(train_set,train_tags)
 			
-			accuracies[i] = np.mean(np.array(predicted_tags.argmax(axis=1) == dev_tags.argmax(axis=1)).astype(int))
+			accuracies[i] = np.mean(np.array(predicted_tags == dev_tags.argmax(axis=1)).astype(int))
 			train_accuracies[i] = np.mean(np.array(train_predicted_tags.argmax(axis=1) == train_tags.argmax(axis=1)).astype(int))
 
 			
@@ -233,7 +269,7 @@ for alpha in alphaValues:
 		elif rf_option:
 			#print('SVM - Fold : ', i)
 
-			clf = RFC(n_estimators = 500)
+			clf = RFC(max_features = 0.6, n_estimators = 500, min_weight_fraction_leaf = 0.001, min_samples_leaf = 5, class_weight = 'balanced', criterion = 'gini')
 			clf.fit(train_set, train_tags.argmax(axis=1))
 			
 			predicted_tags = clf.predict(dev_set)
@@ -254,6 +290,11 @@ for alpha in alphaValues:
 	train_accuracy = np.mean(train_accuracies)
 	train_score = np.mean(train_scores)
 
+
+	cm = confusion_matrix(y_true = dev_tags.argmax(axis=1), y_pred = predicted_tags)
+	plt.figure()	
+	plot_confusion_matrix(cm, dataNames)
+	plt.show()
 	print('ACCURACY : ', accuracy )
 	print('SCORE : ', score)
 	print('TRAIN ACCURACY : ', train_accuracy )
