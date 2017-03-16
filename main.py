@@ -112,7 +112,6 @@ def loadFastaFiles(fileList):
 
 			setOfAminoAcids = list(set(setOfAminoAcids).union(set(sequence)))
 
-
 			secondIndex += 1
 
 			## Adding sequqnce name to array
@@ -251,8 +250,6 @@ for alpha in alphaValues:
 #			  {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
 			 ]
 
-			print(train_set.shape)
-			print(train_tags.shape)
 			clf = sklearn_Grid_Search(svm.SVC(probability = True), param_grid, train_set, train_tags.argmax(axis=1))
 			
 			predicted_tags = clf.predict(dev_set)
