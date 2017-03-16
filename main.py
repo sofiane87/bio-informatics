@@ -137,7 +137,7 @@ def featurize(sequences,setOfAminoAcids,lengthArray):
 	initial_seq = np.array([ProteinAnalysis(sequences[j][:100]) for j in range(len(sequences))])
 	final_seq = np.array([ProteinAnalysis(sequences[j][-100:]) for j in range(len(sequences))])
 
-	featurized_sequence = np.zeros([len(sequences), 8+3*len(setOfAminoAcids)])
+	featurized_sequence = np.zeros([len(sequences), 12+3*len(setOfAminoAcids)])
 	featurized_sequence[:,1:len(setOfAminoAcids)+1] = np.array([[full_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids] for j in range(len(sequences))]) 
 	featurized_sequence[:,len(setOfAminoAcids)+1:2*len(setOfAminoAcids)+1] =  np.array([[initial_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
 	featurized_sequence[:,2*len(setOfAminoAcids)+1:3*len(setOfAminoAcids)+1] =  np.array([[final_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
@@ -146,6 +146,8 @@ def featurize(sequences,setOfAminoAcids,lengthArray):
 	featurized_sequence[:,3*len(setOfAminoAcids)+3] = np.array([full_seq[j].molecular_weight() for j in range(len(sequences))])
 	featurized_sequence[:,3*len(setOfAminoAcids)+4] = np.array([full_seq[j].aromaticity() for j in range(len(sequences))])
 	featurized_sequence[:,3*len(setOfAminoAcids)+5:3*len(setOfAminoAcids)+8] = np.array([full_seq[j].secondary_structure_fraction() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+8:3*len(setOfAminoAcids)+10] = np.array([[sequences[j][:50].count('KDEL'),sequences[j][:50].count('SKL')] for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+10:3*len(setOfAminoAcids)+12] = np.array([[sequences[j][-50:].count('KDEL'),sequences[j][:50].count('SKL')] for j in range(len(sequences))])
 
 	return featurized_sequence
 
