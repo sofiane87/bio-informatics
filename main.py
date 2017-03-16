@@ -59,7 +59,7 @@ def RMSE(y, y_pred):
 
 def sklearn_Grid_Search(model, parameters, X, Y):
     # grid search cross validation
-    GSCV = GridSearchCV(model, parameters, cv=KFold(n_splits=4, shuffle=True, random_state=42), scoring=make_scorer(RMSE))
+    GSCV = GridSearchCV(model, parameters, cv=KFold(n_splits=4, shuffle=True, random_state=42), scoring=make_scorer(RMSE), verbose = 3)
     print(X.shape)
     print(Y.shape)
     GSCV.fit(X, Y)
@@ -137,7 +137,7 @@ def featurize(sequences,setOfAminoAcids,lengthArray):
 	initial_seq = np.array([ProteinAnalysis(sequences[j][:100]) for j in range(len(sequences))])
 	final_seq = np.array([ProteinAnalysis(sequences[j][-100:]) for j in range(len(sequences))])
 
-	featurized_sequence = np.zeros([len(sequences), 12+3*len(setOfAminoAcids)])
+	featurized_sequence = np.zeros([len(sequences), 17+3*len(setOfAminoAcids)])
 	featurized_sequence[:,1:len(setOfAminoAcids)+1] = np.array([[full_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids] for j in range(len(sequences))]) 
 	featurized_sequence[:,len(setOfAminoAcids)+1:2*len(setOfAminoAcids)+1] =  np.array([[initial_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
 	featurized_sequence[:,2*len(setOfAminoAcids)+1:3*len(setOfAminoAcids)+1] =  np.array([[final_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
@@ -145,9 +145,18 @@ def featurize(sequences,setOfAminoAcids,lengthArray):
 	featurized_sequence[:,3*len(setOfAminoAcids)+2] = np.array([full_seq[j].gravy() for j in range(len(sequences))])
 	featurized_sequence[:,3*len(setOfAminoAcids)+3] = np.array([full_seq[j].molecular_weight() for j in range(len(sequences))])
 	featurized_sequence[:,3*len(setOfAminoAcids)+4] = np.array([full_seq[j].aromaticity() for j in range(len(sequences))])
-	featurized_sequence[:,3*len(setOfAminoAcids)+5:3*len(setOfAminoAcids)+8] = np.array([full_seq[j].secondary_structure_fraction() for j in range(len(sequences))])
-	featurized_sequence[:,3*len(setOfAminoAcids)+8:3*len(setOfAminoAcids)+10] = np.array([[sequences[j][:50].count('KDEL'),sequences[j][:50].count('SKL')] for j in range(len(sequences))])
-	featurized_sequence[:,3*len(setOfAminoAcids)+10:3*len(setOfAminoAcids)+12] = np.array([[sequences[j][-50:].count('KDEL'),sequences[j][:50].count('SKL')] for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+5] = np.array([initial_seq[j].isoelectric_point() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+7] = np.array([initial_seq[j].gravy() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+8] = np.array([initial_seq[j].molecular_weight() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+9] = np.array([initial_seq[j].aromaticity() for j in range(len(sequences))])	
+	featurized_sequence[:,3*len(setOfAminoAcids)+10] = np.array([final_seq[j].isoelectric_point() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+11] = np.array([final_seq[j].gravy() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+12] = np.array([final_seq[j].molecular_weight() for j in range(len(sequences))])
+	featurized_sequence[:,3*len(setOfAminoAcids)+13] = np.array([final_seq[j].aromaticity() for j in range(len(sequences))])	
+
+	featurized_sequence[:,3*len(setOfAminoAcids)+14:3*len(setOfAminoAcids)+17] = np.array([full_seq[j].secondary_structure_fraction() for j in range(len(sequences))])
+	#featurized_sequence[:,3*len(setOfAminoAcids)+8:3*len(setOfAminoAcids)+11] = np.array([[len(re.findall('RL.{5}?HL', sequences[j][:50])) ,len(re.findall('RL.{5}?HL', sequences[j][-50:])), len(re.findall('RL.{5}?HL', sequences[j]))] for j in range(len(sequences))])
+	#featurized_sequence[:,] = np.array([[sequences[j][-50:].count('KDEL'),sequences[j][-50:].count('SKL')] for j in range(len(sequences))])
 
 	return featurized_sequence
 
@@ -248,8 +257,8 @@ for alpha in alphaValues:
 		elif svm_option:
 			#print('SVM - Fold : ', i)
 			param_grid = [
-			  {'C': [1, 10, 100, 1000], 'kernel': ['linear']}
-#			  {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
+			  {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+			  {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
 			 ]
 
 			clf = sklearn_Grid_Search(svm.SVC(probability = True), param_grid, train_set, train_tags.argmax(axis=1))
@@ -266,7 +275,7 @@ for alpha in alphaValues:
 		elif rf_option:
 			#print('SVM - Fold : ', i)
 
-			clf = RFC(max_features = 0.6, n_estimators = 500, min_weight_fraction_leaf = 0.001, min_samples_leaf = 5, class_weight = 'balanced', criterion = 'gini')
+			clf = RFC(n_jobs = -1, max_features = 0.9, n_estimators = 500, min_samples_leaf = 4)
 			clf.fit(train_set, train_tags.argmax(axis=1))
 			
 			predicted_tags = clf.predict(dev_set)
@@ -287,12 +296,13 @@ for alpha in alphaValues:
 	train_accuracy = np.mean(train_accuracies)
 	train_score = np.mean(train_scores)
 
-
-	cm = confusion_matrix(y_true = dev_tags.argmax(axis=1), y_pred = predicted_tags)
-	plt.figure()	
-	plot_confusion_matrix(cm, dataNames)
-	plt.show()
 	print('ACCURACY : ', accuracy )
 	print('SCORE : ', score)
 	print('TRAIN ACCURACY : ', train_accuracy )
 	print('TRAIN SCORE : ', train_score)
+
+
+cm = confusion_matrix(y_true = dev_tags.argmax(axis=1), y_pred = predicted_tags)
+plt.figure()	
+plot_confusion_matrix(cm, dataNames)
+plt.show()
