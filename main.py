@@ -10,7 +10,7 @@ import sys
 import platform
 from Bio import SeqIO
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-from sklearn.linear_model import Ridge as ridge
+from sklearn.linear_model import RidgeClassifier
 from sklearn import svm
 from sklearn.model_selection import train_test_split
 from  sklearn.ensemble import RandomForestClassifier as RFC
@@ -24,11 +24,10 @@ import itertools
 scriptPath = os.path.realpath(__file__)
 rootPath = os.path.sep.join(scriptPath.split(os.path.sep)[:-1])
 dataPath = rootPath + os.path.sep + 'data' +  os.path.sep
-
+seed  = 42
 
 ####################### Auxiliary function ###########################
 def plot_confusion_matrix(cm, classes, normalize=True, title='Confusion matrix', cmap=plt.cm.Blues):
-
 
 
 	if normalize:
@@ -54,12 +53,10 @@ def plot_confusion_matrix(cm, classes, normalize=True, title='Confusion matrix',
 	plt.ylabel('True label')
 	plt.xlabel('Predicted label')
 
-def RMSE(y, y_pred):
-    return -np.sqrt(mean_squared_error(y, y_pred))
 
-def sklearn_Grid_Search(model, parameters, X, Y):
+def sklearn_Grid_Search(model, parameters, X, Y, n_folds = 4):
     # grid search cross validation
-    GSCV = GridSearchCV(model, parameters, cv=KFold(n_splits=4, shuffle=True, random_state=42), scoring=make_scorer(RMSE), verbose = 3)
+    GSCV = GridSearchCV(model, parameters, cv=KFold(n_splits=n_folds, shuffle=True, random_state=42), verbose = 3)
     print(X.shape)
     print(Y.shape)
     GSCV.fit(X, Y)
@@ -74,6 +71,23 @@ def sklearn_Grid_Search(model, parameters, X, Y):
         print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
 
     return GSCV
+
+
+def grid_search(model, parameters, X, Y, seed=seed, n_folds = 10):
+    # grid search cross validation
+    grid_CV = GridSearchCV(model, parameters, cv=KFold(n_splits=n_folds, shuffle=True, random_state=seed), verbose = 3)
+    grid_CV.fit(X, Y)
+
+    print("Best parameters set found on development set:")
+    print(grid_CV.best_params_)
+
+    print("Grid scores on development set:")
+    means = grid_CV.cv_results_['mean_test_score']
+    stds = grid_CV.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, grid_CV.cv_results_['params']):
+        print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+    return grid_CV
+
 
 def printResults(results,index):
 	if (platform.system().lower() == 'windows'):
@@ -208,101 +222,46 @@ print('Shuffling the data : ')
 
 print('FEATURIZATION')
 
-featurized_input = featurize(sequences,setOfAminoAcids,lengthArray)
+X_train_all = featurize(sequences,setOfAminoAcids,lengthArray)
 
-accuracies = np.zeros(nFolds)
-scores = np.zeros(nFolds)
-
-train_accuracies = np.zeros(nFolds)
-train_scores = np.zeros(nFolds)
-
-
-tags = np.array(tags)
+Y_train_all = np.array(tags).argmax(axis = 1)
 names = np.array(names)
-lengthArray = np.array(lengthArray)
 
 
-print('Number Of Folds : ', nFolds)
+if ridge_option : 
+	classifier = RidgeClassifier() 
+	alpha_range = np.logspace(-6, 5, num=11, endpoint=False)
+	model_params = {'alpha': alpha_range}
 
-if not(ridge_option):
-	alphaValues = [0]
-
-
-for alpha in alphaValues:
-
-	if ridge_option:
-		print('alpha = ', alpha)
-	elif svm_option:
-		print('gamma = ', alpha)
-	for i in range(nFolds):
-		train_set, dev_set, train_tags, dev_tags = train_test_split(featurized_input, tags, test_size=0.25)
-
-
-		if ridge_option:
-			#print('Ridge Regression - Fold : ', i)
-
-			ridge_model = ridge(alpha = alpha)
-			ridge_model.fit(train_set,train_tags)
-
-			predicted_tags = ridge_model.predict(dev_set).argmax(axis=1)
-			train_predicted_tags = ridge_model.predict(train_set)
-
-			scores[i] = ridge_model.score(dev_set,dev_tags)
-			train_scores[i] = ridge_model.score(train_set,train_tags)
-			
-			accuracies[i] = np.mean(np.array(predicted_tags == dev_tags.argmax(axis=1)).astype(int))
-			train_accuracies[i] = np.mean(np.array(train_predicted_tags.argmax(axis=1) == train_tags.argmax(axis=1)).astype(int))
-
-			
-		elif svm_option:
-			#print('SVM - Fold : ', i)
-			param_grid = [
-			  {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-			  {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']},
-			 ]
-
-			clf = sklearn_Grid_Search(svm.SVC(probability = True), param_grid, train_set, train_tags.argmax(axis=1))
-			
-			predicted_tags = clf.predict(dev_set)
-			train_predicted_tags = clf.predict(train_set)
-
-			scores[i] = clf.score(dev_set,dev_tags.argmax(axis=1))
-			train_scores[i] = clf.score(dev_set,dev_tags.argmax(axis=1))
-			
-			accuracies[i] = np.mean(np.array(predicted_tags == dev_tags.argmax(axis=1)).astype(int))
-			train_accuracies[i] = np.mean(np.array(train_predicted_tags == train_tags.argmax(axis=1)).astype(int))
-
-		elif rf_option:
-			#print('SVM - Fold : ', i)
-
-			clf = RFC(n_jobs = -1, max_features = 0.9, n_estimators = 500, min_samples_leaf = 4)
-			clf.fit(train_set, train_tags.argmax(axis=1))
-			
-			predicted_tags = clf.predict(dev_set)
-			train_predicted_tags = clf.predict(train_set)
-
-			scores[i] = clf.score(dev_set,dev_tags.argmax(axis=1))
-			train_scores[i] = clf.score(train_set,train_tags.argmax(axis=1))
-			
-			accuracies[i] = np.mean(np.array(predicted_tags == dev_tags.argmax(axis=1)).astype(int))
-			train_accuracies[i] = np.mean(np.array(train_predicted_tags == train_tags.argmax(axis=1)).astype(int))
-
-		if len(alphaValues) == 1:
-			print('Fold : ', i )
-			print('Accuracy : ', accuracies[i])
-	accuracy = np.mean(accuracies)
-	score = np.mean(scores)
-
-	train_accuracy = np.mean(train_accuracies)
-	train_score = np.mean(train_scores)
-
-	print('ACCURACY : ', accuracy )
-	print('SCORE : ', score)
-	print('TRAIN ACCURACY : ', train_accuracy )
-	print('TRAIN SCORE : ', train_score)
+elif svm_option : 
+	classifier = svm.SVC()
+	model_params = {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']}
+	 
+elif rf_option : 
+	classifier = RFC()
+	estimators_range = np.int_(np.linspace(250, 1000, num=4, endpoint=True))
+	min_samples_leaf = np.linspace(0, 20, num=2, endpoint=True)
+	max_features = np.array(list(range(10)))/10
+	model_params = {'n_jobs' : [-1], 'n_estimators': estimators_range, 'min_samples_leaf': min_samples_leaf, 'max_features' : max_features}
 
 
-cm = confusion_matrix(y_true = dev_tags.argmax(axis=1), y_pred = predicted_tags)
-plt.figure()	
-plot_confusion_matrix(cm, dataNames)
-plt.show()
+classifier = grid_search(classifier, model_params, X_train_all, Y_train_all, seed)
+print(classifier.best_params_, classifier.best_score_)
+
+
+
+
+	
+# train_accuracy = np.mean()
+# train_score = np.mean()
+
+# print('ACCURACY : ', accuracy )
+# print('SCORE : ', score)
+# print('TRAIN ACCURACY : ', train_accuracy )
+# print('TRAIN SCORE : ', train_score)
+
+
+# cm = confusion_matrix(y_true = dev_tags.argmax(axis=1), y_pred = predicted_tags)
+# plt.figure()	
+# plot_confusion_matrix(cm, dataNames)
+# plt.show()
