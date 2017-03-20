@@ -210,10 +210,15 @@ def featurize(sequences,setOfAminoAcids,lengthArray):
 	print('SECONDARY-STRUCTURE FEATURE')
 	featureDictionnary['secondary'] = np.array([full_seq[j].secondary_structure_fraction() for j in range(len(sequences))])
 
+	# print('SPECIFIC-SEQUENCES FEATURE')
+	# featureDictionnary['specific'] = np.array([[sequence.count(specific_sequence) for specific_sequence in specific_sequences] for sequence in sequences])
+	# featureDictionnary['initialSpecific'] = np.array([[sequence[:50].count(specific_sequence) for specific_sequence in initial_sequences] for sequence in sequences])
+	# featureDictionnary['finalSpecific'] = np.array([[sequence[-50:].count(specific_sequence) for specific_sequence in final_sequences] for sequence in sequences])
+
 	print('SPECIFIC-SEQUENCES FEATURE')
-	featureDictionnary['specific'] = np.array([[sequence.count(specific_sequence) for specific_sequence in specific_sequences] for sequence in sequences])
-	featureDictionnary['initialSpecific'] = np.array([[sequence[:50].count(specific_sequence) for specific_sequence in initial_sequences] for sequence in sequences])
-	featureDictionnary['finalSpecific'] = np.array([[sequence[-50:].count(specific_sequence) for specific_sequence in final_sequences] for sequence in sequences])
+	featureDictionnary['specific'] = np.array([[ int(specific_sequence in sequence) for specific_sequence in specific_sequences] for sequence in sequences])
+	featureDictionnary['initialSpecific'] = np.array([[ int(specific_sequence in sequence[:50]) for specific_sequence in initial_sequences] for sequence in sequences])
+	featureDictionnary['finalSpecific'] = np.array([[ int(specific_sequence in sequence[-50:]) for specific_sequence in final_sequences] for sequence in sequences])
 
 
 	print('TRANSFORMING INTO ARRAY')
@@ -323,14 +328,16 @@ if train and not(nn_option):
 		classifier = LogisticRegression(C=1)
 
 	classifier = grid_search(classifier, model_params, X_train_all, Y_train_all, seed)
-	print(classifier.best_params_, classifier.best_score_)
+	print('BEST PARAMS')
+	print(classifier.best_params_)
+	print('BEST SCORE')
+	print(classifier.best_score_)
 
 else:
 	if ridge_option : 
 		classifier = RidgeClassifier(alpha = 1.0) 
 	elif svm_option : 
-		classifier = svm.SVC()
-		model_params = {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']}
+		classifier = svm.SVC(C = 10, gamma = 0.0001)
 	elif rf_option : 
 		classifier = RFC(max_features =  0.4, n_estimators =  750, min_samples_leaf =  1, n_jobs =  -1)
 	elif lr_option:
