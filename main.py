@@ -8,16 +8,19 @@ import os
 import tensorflow as tf
 import sys
 import platform
+
 from Bio import SeqIO
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
-from sklearn.linear_model import RidgeClassifier
+
+
+from sklearn.linear_model import RidgeClassifier, LogisticRegression
 from sklearn import svm
-from sklearn.model_selection import train_test_split
-from  sklearn.ensemble import RandomForestClassifier as RFC
-import re
-from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
+from sklearn.model_selection import train_test_split, GridSearchCV, KFold, cross_val_score
+from sklearn.ensemble import RandomForestClassifier as RFC
 from sklearn.metrics import mean_squared_error, make_scorer, confusion_matrix
-import matplotlib.pyplot as plt
+
+
+import re
 import itertools
 
 from keras.models import Sequential
@@ -153,6 +156,9 @@ def loadFastaFiles(fileList):
 
 def featurize(sequences,setOfAminoAcids,lengthArray):
 	specific_sequences = ['WW','MWW', 'CWW', 'WWM', 'WMW', 'WCW', 'CWM', 'WCM', 'MCW', 'WWH', 'FWW', 'WCWE', 'WMYH', 'WMYI', 'WMYL', 'WMYM', 'WMYQ', 'WMYV', 'WMYW', 'WMYY', 'QPWR']
+	initial_sequences = ['WWF', 'WMM', 'WQW', 'HWC', 'FWC', 'HWD', 'CMW', 'VMW', 'MM', 'MHV']
+	final_sequences = ['MW', 'CMM', 'WCM', 'WHF', 'PMW', 'AWW', 'CM', 'MMC', 'WFY', 'YWC']
+
 	unambiguousAminoAcids = [letter for letter in 'ACDEFGHIKLMNPQRSTVWY']
 	full_seq = np.array([ProteinAnalysis(sequences[j]) for j in range(len(sequences))])
 	initial_seq = np.array([ProteinAnalysis(sequences[j][:50]) for j in range(len(sequences))])
@@ -170,44 +176,44 @@ def featurize(sequences,setOfAminoAcids,lengthArray):
 	featureDictionnary['initialFrequency'] = np.array([[initial_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
 	featureDictionnary['finalFrequency'] = np.array([[final_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
 	
-	# print('COUNT FEATURE')
-	# featureDictionnary['counts'] = np.array([[full_seq[j].count_amino_acids()[i] for i in setOfAminoAcids] for j in range(len(sequences))]) 
-	# featureDictionnary['initialcounts'] = np.array([[initial_seq[j].count_amino_acids()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
-	# featureDictionnary['finalcounts'] = np.array([[final_seq[j].count_amino_acids()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
+	print('COUNT FEATURE')
+	featureDictionnary['counts'] = np.array([[full_seq[j].count_amino_acids()[i] for i in setOfAminoAcids] for j in range(len(sequences))]) 
+	featureDictionnary['initialcounts'] = np.array([[initial_seq[j].count_amino_acids()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
+	featureDictionnary['finalcounts'] = np.array([[final_seq[j].count_amino_acids()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
 
 	print('ISO-ELECTRIC POINT FEATURE')
 	featureDictionnary['iso'] =  np.array([[full_seq[j].isoelectric_point()] for j in range(len(sequences))])
-	#featureDictionnary['initialIso'] =  np.array([[initial_seq[j].isoelectric_point()] for j in range(len(sequences))])
-	#featureDictionnary['finalIso'] =  np.array([[final_seq[j].isoelectric_point()] for j in range(len(sequences))])
+	featureDictionnary['initialIso'] =  np.array([[initial_seq[j].isoelectric_point()] for j in range(len(sequences))])
+	featureDictionnary['finalIso'] =  np.array([[final_seq[j].isoelectric_point()] for j in range(len(sequences))])
 	
 	print('GRAVY FEATURE')
 	featureDictionnary['gravy']  = np.array([[full_seq[j].gravy()] for j in range(len(sequences))])
-	#featureDictionnary['initialGravy']  = np.array([[initial_seq[j].gravy()] for j in range(len(sequences))])
-	#featureDictionnary['finalGravy']  = np.array([[final_seq[j].gravy()] for j in range(len(sequences))])
+	featureDictionnary['initialGravy']  = np.array([[initial_seq[j].gravy()] for j in range(len(sequences))])
+	featureDictionnary['finalGravy']  = np.array([[final_seq[j].gravy()] for j in range(len(sequences))])
 	
 	print('MOLECULAR WEIGHT FEATURE')
 	featureDictionnary['weight']  = np.array([[full_seq[j].molecular_weight()] for j in range(len(sequences))])
-	#featureDictionnary['initialweight']  = np.array([[initial_seq[j].molecular_weight()] for j in range(len(sequences))])
-	#featureDictionnary['finalweight']  = np.array([[final_seq[j].molecular_weight()] for j in range(len(sequences))])
+	featureDictionnary['initialweight']  = np.array([[initial_seq[j].molecular_weight()] for j in range(len(sequences))])
+	featureDictionnary['finalweight']  = np.array([[final_seq[j].molecular_weight()] for j in range(len(sequences))])
 
 	print('AROMATICITY FEATURE')
 	featureDictionnary['aromaticity'] = np.array([[full_seq[j].aromaticity()] for j in range(len(sequences))])
-	#featureDictionnary['initialAromaticity'] = np.array([[initial_seq[j].aromaticity()] for j in range(len(sequences))])	
-	#featureDictionnary['finalAromaticity'] = np.array([[final_seq[j].aromaticity()] for j in range(len(sequences))])	
+	featureDictionnary['initialAromaticity'] = np.array([[initial_seq[j].aromaticity()] for j in range(len(sequences))])	
+	featureDictionnary['finalAromaticity'] = np.array([[final_seq[j].aromaticity()] for j in range(len(sequences))])	
 
-	# print('INSTABILITY INDEX FEATURE')
-	# featureDictionnary['instability'] = np.array([[full_seq[j].instability_index()] for j in range(len(sequences))])
-	# featureDictionnary['initialinstability'] = np.array([[initial_seq[j].instability_index()] for j in range(len(sequences))])	
-	# featureDictionnary['finalinstability'] = np.array([[final_seq[j].instability_index()] for j in range(len(sequences))])	
+	print('INSTABILITY INDEX FEATURE')
+	featureDictionnary['instability'] = np.array([[full_seq[j].instability_index()] for j in range(len(sequences))])
+	featureDictionnary['initialinstability'] = np.array([[initial_seq[j].instability_index()] for j in range(len(sequences))])	
+	featureDictionnary['finalinstability'] = np.array([[final_seq[j].instability_index()] for j in range(len(sequences))])	
 
 
-	# print('SECONDARY-STRUCTURE FEATURE')
-	# featureDictionnary['secondary'] = np.array([full_seq[j].secondary_structure_fraction() for j in range(len(sequences))])
+	print('SECONDARY-STRUCTURE FEATURE')
+	featureDictionnary['secondary'] = np.array([full_seq[j].secondary_structure_fraction() for j in range(len(sequences))])
 
-	# print('SPECIFIC-SEQUENCES FEATURE')
-	# featureDictionnary['specific'] = np.array([[sequence.count(specific_sequence) for specific_sequence in specific_sequences] for sequence in sequences])
-	# featureDictionnary['initialSpecific'] = np.array([[sequence[:50].count(specific_sequence) for specific_sequence in specific_sequences] for sequence in sequences])
-	# featureDictionnary['finalSpecific'] = np.array([[sequence[-50:].count(specific_sequence) for specific_sequence in specific_sequences] for sequence in sequences])
+	print('SPECIFIC-SEQUENCES FEATURE')
+	featureDictionnary['specific'] = np.array([[sequence.count(specific_sequence) for specific_sequence in specific_sequences] for sequence in sequences])
+	featureDictionnary['initialSpecific'] = np.array([[sequence[:50].count(specific_sequence) for specific_sequence in initial_sequences] for sequence in sequences])
+	featureDictionnary['finalSpecific'] = np.array([[sequence[-50:].count(specific_sequence) for specific_sequence in final_sequences] for sequence in sequences])
 
 
 	print('TRANSFORMING INTO ARRAY')
@@ -244,6 +250,7 @@ ridge_option = True
 svm_option = False
 rf_option = False
 nn_option = False
+lr_option = False
 if ('-ridge' in args):
 	ridge_option = True
 elif('-svm' in args):
@@ -255,7 +262,9 @@ elif('-rf' in args):
 elif('-nn' in args):
 	ridge_option = False
 	nn_option = True
-
+elif('-lr' in args):
+	ridge_option = False
+	lr_option = True
 train = False
 if('-train' in args) or ('-t' in args):
 	train = True
@@ -308,7 +317,10 @@ if train and not(nn_option):
 		min_samples_leaf = np.int_(np.linspace(1, 40, num=20, endpoint=True))
 		max_features = np.linspace(0.1, 0.8, num=8, endpoint=True)
 		model_params = {'n_jobs' : [-1], 'n_estimators': estimators_range, 'min_samples_leaf': min_samples_leaf, 'max_features' : max_features}
-
+	elif lr_option:
+		c_range = np.int_(np.linspace(1, 1000, num=200, endpoint=True))
+		model_params = {'n_jobs' : [-1], 'C': c_range}
+		classifier = LogisticRegression(C=1)
 
 	classifier = grid_search(classifier, model_params, X_train_all, Y_train_all, seed)
 	print(classifier.best_params_, classifier.best_score_)
@@ -321,6 +333,8 @@ else:
 		model_params = {'C': [1, 2, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']}
 	elif rf_option : 
 		classifier = RFC(max_features =  0.4, n_estimators =  750, min_samples_leaf =  1, n_jobs =  -1)
+	elif lr_option:
+		classifier = LogisticRegression(C=1)
 	elif nn_option:
 
 		x_train, x_test, y_train, y_test = train_test_split(X_train_all, Y_train_all, test_size=0.1, random_state=0)
@@ -328,12 +342,12 @@ else:
 		print(x_train[0])
 		print(y_train[0])
 		model = Sequential()
-		model.add(Dense(units=64, input_dim=X_train_all.shape[1]))
+		model.add(Dense(units=128, input_dim=X_train_all.shape[1]))
 		model.add(Activation('relu'))
 		model.add(BatchNormalization())
-		model.add(Dense(units=64, input_dim=X_train_all.shape[1]))
-		model.add(Activation('relu'))
-		model.add(BatchNormalization())		
+		# model.add(Dense(units=64, input_dim=X_train_all.shape[1]))
+		# model.add(Activation('relu'))
+		# model.add(BatchNormalization())		
 		model.add(Dense(units=4))
 		model.add(Activation('softmax'))
 		model.compile(loss='categorical_crossentropy',

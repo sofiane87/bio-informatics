@@ -483,7 +483,7 @@
   \vspace{\dropfromtop}%
   \hbox to \textwidth{\raisebox{5pt}[0pt]{%
   \parbox[b]{415pt}{\raggedleft{\helveticacnitalic\fontsize{8}{12}\selectfont {Bioinformatics}}\\[1pt]
-  {\helveticacn doi.10.1093/bioinformatics/xxxxxx}\\[1pt]
+  {\helveticacn COMPGI10}\\[1pt]
   {\ifx\@access\@empty
   \else
   {\helveticacn \@access}\fi}
@@ -498,7 +498,7 @@
 %        Vol. 00\ no. 00 \@pubyear\\
 %        \hfill Pages \thepagerange
 %  }
-  \hfill\includegraphics{OUP_First_SBk_Bot_8401.eps}}
+  \hfill\includegraphics[width=30mm,scale=0.3]{ucl_logo.jpg}}
   \vskip2pt
   \rule{415pt}{2\p@}\par%
   \helvetica

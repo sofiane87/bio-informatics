@@ -1,47 +1,50 @@
 \documentclass{bioinfo}
-\copyrightyear{2015} \pubyear{2015}
+\usepackage{datetime}
 
-\access{Advance Access Publication Date: Day Month Year}
-\appnotes{Manuscript Category}
 
-\begin{document}
+\copyrightyear{2017} \pubyear{2017}
+
+\access{Bioinformatics Report \\
+Date: \today}
+\appnotes{Graduate Assignment}
+
+\begin{document} 
 \firstpage{1}
 
-\subtitle{Subject Section}
+\subtitle{Bioinformatics}
 
-\title[short Title]{This is a title}
-\author[Sample \textit{et~al}.]{Corresponding Author\,$^{\text{\sfb 1,}*}$, Co-Author\,$^{\text{\sfb 2}}$ and Co-Author\,$^{\text{\sfb 2,}*}$}
-\address{$^{\text{\sf 1}}$Department, Institution, City, Post Code, Country and \\
-$^{\text{\sf 2}}$Department, Institution, City, Post Code,
-Country.}
+\title[short Title]{Protein Classification By feature extraction}
+\author[Sample \textit{et~al}.]{Sofiane MAHIOU}
+\address{Computer Science, UCL, London, WC1E 6BT, UK}
 
-\corresp{$^\ast$To whom correspondence should be addressed.}
+\corresp{}
 
-\history{Received on XXXXX; revised on XXXXX; accepted on XXXXX}
+\history{}
 
-\editor{Associate Editor: XXXXXXX}
+\editor{}
 
-\abstract{\textbf{Motivation:} Text Text Text Text Text Text Text Text Text Text Text Text Text
-Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text
-Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text Text
-Text Text Text Text Text Text
-Text Text Text Text Text.\\
-\textbf{Results:} Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text Text
-Text Text Text Text Text Text Text Text Text Text Text Text Text  Text Text Text Text Text Text\\
-\textbf{Availability:} Text  Text Text Text Text Text Text Text Text Text  Text Text Text Text
-Text Text Text Text Text Text Text Text Text Text Text Text Text Text  Text\\
-\textbf{Contact:} \href{name@bio.com}{name@bio.com}\\
-\textbf{Supplementary information:} Supplementary data are available at \textit{Bioinformatics}
-online.}
+\abstract{\textbf{Aim :} The goal of this assignment is to provide an automated system that is able to classify proteins (Amino Acid sequences) into four classes each being a subcellular locations : \textbf{[Cytosolic, Secreted, Nuclear, Mitochondrial]}\\
+\textbf{Results :} Using a \textit{Random Forest Classifer} we manage to reache a \textbf{67\% cross-validation accuracy}.\\
+\textbf{Improvements:} In order to improve the results of the classifier, deepening the feature extraction method seems to be the way to go. Another method would be to use neural network techniques.\\
+\textbf{Contact:} \href{ucabsm1@ucl.ac.uk}{ucabsm1@ucl.ac.uk}\\
+}
 
 \maketitle
 
 \section{Introduction}
 
-Text Text Text Text Text Text  Text Text Text Text Text Text Text
-Text Text  Text Text Text Text Text Text. Figure~\ref{fig:01}
-shows that the above method  Text Text Text Text  Text Text Text
-Text Text Text  Text Text.  \citep{Bag01} wants to know about
+Currently, There is a growing need for fully automated methods to analyse amino acids sequences. One of the process that need to be automated is \textbf{the identification of the protein's subcellular location}. This problem can be splitted into two sub problems :\\
+\begin{itemize}
+	\item \textbf{feature extraction: } the goal of this task is to choose the features that would allow an efficient classification, to be more precise, the chosen features should allow to easily seperate the sequences into classes or groups which will then be matched with the various subcellular locations 
+	\item \textbf{clasffication: } once the features obtained, it is then necessary to choose a fitting classification algorithm that will use the various features selected as a \textit{vector representation} of each sequence that will then be fed to the classification algorithm during both training and testing.
+\end{itemize}
+
+It is however, possible to avoid splitting the problem into two sub-problems by using methods that have been designed to classify sequences of variables lengths such as :\\
+
+
+Within the last few years the complete sequence has been determined for over 3000 genomes. This has created the need for fully automated methods to analyse the vast amount of sequence data now available. The assignment of a function for a given protein has proved to be difficult where no clear homology to proteins of known function exists. Knowing the subcellular location of a protein (i.e. where in the cell it is found) in may give some clue as to its possible function, making an automated method that assigns proteins to a certain subcellular location a useful tool for analysis.
+
+
 {\ldots}{\ldots} text follows.
 \begin{equation}
 \sum \text{\it x}+ \text{\it y} =\text{\it Z}\label{eq:01}\vspace*{-10pt}

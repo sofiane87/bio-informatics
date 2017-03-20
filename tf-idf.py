@@ -23,6 +23,11 @@ numberToDisplay = 10
 if ('-display' in args):
 	numberToDisplay = int(args[args.index('-display') + 1])
 
+length = 0
+if ('-length' in args):
+	length = int(args[args.index('-length') + 1])
+
+
 ####################### Loading the Data ################################
 
 
@@ -68,9 +73,15 @@ def loadFastaFiles(fileList):
 	
 	return names, sequences, tags, lengthArray, setOfAminoAcids 
 
-def computeTFIDF(sequenceList,N,numberToDisplay):
+def computeTFIDF(sequenceList,N,numberToDisplay,length):
 	print('building the N-GRAM sequence')
-	corpus = [" ".join(["".join(sequence[i:i+N]) for i in range(len(sequence)-N)]) for sequence in sequenceList]
+	if length == 0:
+		corpus = [" ".join(["".join(sequence[i:i+N]) for i in range(len(sequence)-N)]) for sequence in sequenceList]
+	else:
+		if length >0:
+			corpus = [" ".join(["".join(sequence[:length][i:i+N]) for i in range(len(sequence)-N)]) for sequence in sequenceList]
+		else:
+			corpus = [" ".join(["".join(sequence[length:][i:i+N]) for i in range(len(sequence)-N)]) for sequence in sequenceList]
 	print('COMPUTING TF-IDF')
 	vectorizer = TfidfVectorizer(min_df=1)
 	X = vectorizer.fit_transform(corpus)
@@ -88,9 +99,10 @@ print('LOADING THE DATA SET')
 dataNames = ['cyto', 'mito', 'nucleus', 'secreted']
 names, sequences, tags, lengthArray, setOfAminoAcids  = loadFastaFiles(dataNames)
 
+
 print('COMPUTING TF-IDF for : ', sequenceType)
 if sequenceType == 'all':
-	computeTFIDF(sequences,N_gram,numberToDisplay)
+	computeTFIDF(sequences,N_gram,numberToDisplay,length)
 else:
 	dataIndex = dataNames.index(sequenceType)
 	sequenceList = np.array(sequences)[np.array(tags).argmax(axis = 1) == dataIndex]
