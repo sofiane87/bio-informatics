@@ -84,6 +84,7 @@ def sklearn_Grid_Search(model, parameters, X, Y, n_folds = 4):
 
 def grid_search(model, parameters, X, Y, seed=seed, n_folds = 10):
     # grid search cross validation
+    print('BIGINING GRID SEACH')
     grid_CV = GridSearchCV(model, parameters, cv=KFold(n_splits=n_folds, shuffle=True, random_state=seed), verbose = 3)
     grid_CV.fit(X, Y)
 
@@ -294,6 +295,7 @@ svm_option = False
 rf_option = False
 nn_option = False
 lr_option = False
+
 if ('-ridge' in args):
 	ridge_option = True
 elif('-svm' in args):
@@ -308,6 +310,7 @@ elif('-nn' in args):
 elif('-lr' in args):
 	ridge_option = False
 	lr_option = True
+
 train = False
 if('-train' in args) or ('-t' in args):
 	train = True
