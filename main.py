@@ -129,8 +129,8 @@ def loadFastaFiles(fileList):
 		fasta_sequences =  SeqIO.parse(open(dataPath + name + '.fasta'),'fasta') # The function I miss
 		for fasta in fasta_sequences:
 			seqName, sequence = fasta.id, str(fasta.seq)
-
-			sequence = re.sub('X|U', '', sequence)
+			sequence = re.sub('X', ["A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V" ][np.random.randint(0,20)], sequence)
+			sequence = re.sub('U', '', sequence)
 			sequence = re.sub('B', ['N', 'D'][np.random.randint(0,2)], sequence)
 
 			setOfAminoAcids = list(set(setOfAminoAcids).union(set(sequence)))
@@ -163,6 +163,9 @@ def featurize(sequences,setOfAminoAcids,lengthArray):
 	full_seq = np.array([ProteinAnalysis(sequences[j]) for j in range(len(sequences))])
 	initial_seq = np.array([ProteinAnalysis(sequences[j][:50]) for j in range(len(sequences))])
 	final_seq = np.array([ProteinAnalysis(sequences[j][-50:]) for j in range(len(sequences))])
+	initial_seq_100 = np.array([ProteinAnalysis(sequences[j][:100]) for j in range(len(sequences))])
+	final_seq_100 = np.array([ProteinAnalysis(sequences[j][-100:]) for j in range(len(sequences))])
+
 
 
 	print('BUILDING DICTIONNARY ')
@@ -175,40 +178,53 @@ def featurize(sequences,setOfAminoAcids,lengthArray):
 	featureDictionnary['frequency'] = np.array([[full_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids] for j in range(len(sequences))]) 
 	featureDictionnary['initialFrequency'] = np.array([[initial_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
 	featureDictionnary['finalFrequency'] = np.array([[final_seq[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
+	featureDictionnary['initialFrequency100'] = np.array([[initial_seq_100[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
+	featureDictionnary['finalFrequency100'] = np.array([[final_seq_100[j].get_amino_acids_percent()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
 	
 	print('COUNT FEATURE')
 	featureDictionnary['counts'] = np.array([[full_seq[j].count_amino_acids()[i] for i in setOfAminoAcids] for j in range(len(sequences))]) 
 	featureDictionnary['initialcounts'] = np.array([[initial_seq[j].count_amino_acids()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
 	featureDictionnary['finalcounts'] = np.array([[final_seq[j].count_amino_acids()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
+	featureDictionnary['initialcounts100'] = np.array([[initial_seq_100[j].count_amino_acids()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
+	featureDictionnary['finalcounts100'] = np.array([[final_seq_100[j].count_amino_acids()[i] for i in setOfAminoAcids]  for j in range(len(sequences))]) 
 
 	print('ISO-ELECTRIC POINT FEATURE')
 	featureDictionnary['iso'] =  np.array([[full_seq[j].isoelectric_point()] for j in range(len(sequences))])
 	featureDictionnary['initialIso'] =  np.array([[initial_seq[j].isoelectric_point()] for j in range(len(sequences))])
 	featureDictionnary['finalIso'] =  np.array([[final_seq[j].isoelectric_point()] for j in range(len(sequences))])
+	featureDictionnary['initialIso100'] =  np.array([[initial_seq_100[j].isoelectric_point()] for j in range(len(sequences))])
+	featureDictionnary['finalIso100'] =  np.array([[final_seq_100[j].isoelectric_point()] for j in range(len(sequences))])
 	
 	print('GRAVY FEATURE')
 	featureDictionnary['gravy']  = np.array([[full_seq[j].gravy()] for j in range(len(sequences))])
 	featureDictionnary['initialGravy']  = np.array([[initial_seq[j].gravy()] for j in range(len(sequences))])
 	featureDictionnary['finalGravy']  = np.array([[final_seq[j].gravy()] for j in range(len(sequences))])
+	featureDictionnary['initialGravy100']  = np.array([[initial_seq_100[j].gravy()] for j in range(len(sequences))])
+	featureDictionnary['finalGravy100']  = np.array([[final_seq_100[j].gravy()] for j in range(len(sequences))])
 	
 	print('MOLECULAR WEIGHT FEATURE')
-	featureDictionnary['weight']  = np.array([[full_seq[j].molecular_weight()] for j in range(len(sequences))])
-	featureDictionnary['initialweight']  = np.array([[initial_seq[j].molecular_weight()] for j in range(len(sequences))])
-	featureDictionnary['finalweight']  = np.array([[final_seq[j].molecular_weight()] for j in range(len(sequences))])
+
+	if not(svm_option):
+	
+		featureDictionnary['weight']  = np.array([[full_seq[j].molecular_weight()] for j in range(len(sequences))])
+		featureDictionnary['initialweight']  = np.array([[initial_seq[j].molecular_weight()] for j in range(len(sequences))])
+		featureDictionnary['finalweight']  = np.array([[final_seq[j].molecular_weight()] for j in range(len(sequences))])
+		featureDictionnary['initialweight100']  = np.array([[initial_seq_100[j].molecular_weight()] for j in range(len(sequences))])
+		featureDictionnary['finalweight100']  = np.array([[final_seq_100[j].molecular_weight()] for j in range(len(sequences))])
 
 	print('AROMATICITY FEATURE')
 	featureDictionnary['aromaticity'] = np.array([[full_seq[j].aromaticity()] for j in range(len(sequences))])
 	featureDictionnary['initialAromaticity'] = np.array([[initial_seq[j].aromaticity()] for j in range(len(sequences))])	
 	featureDictionnary['finalAromaticity'] = np.array([[final_seq[j].aromaticity()] for j in range(len(sequences))])	
 
-	print('INSTABILITY INDEX FEATURE')
-	featureDictionnary['instability'] = np.array([[full_seq[j].instability_index()] for j in range(len(sequences))])
-	featureDictionnary['initialinstability'] = np.array([[initial_seq[j].instability_index()] for j in range(len(sequences))])	
-	featureDictionnary['finalinstability'] = np.array([[final_seq[j].instability_index()] for j in range(len(sequences))])	
+	# print('INSTABILITY INDEX FEATURE')
+	# featureDictionnary['instability'] = np.array([[full_seq[j].instability_index()] for j in range(len(sequences))])
+	# featureDictionnary['initialinstability'] = np.array([[initial_seq[j].instability_index()] for j in range(len(sequences))])	
+	# featureDictionnary['finalinstability'] = np.array([[final_seq[j].instability_index()] for j in range(len(sequences))])	
 
 
-	print('SECONDARY-STRUCTURE FEATURE')
-	featureDictionnary['secondary'] = np.array([full_seq[j].secondary_structure_fraction() for j in range(len(sequences))])
+	# print('SECONDARY-STRUCTURE FEATURE')
+	# featureDictionnary['secondary'] = np.array([full_seq[j].secondary_structure_fraction() for j in range(len(sequences))])
 
 	# print('SPECIFIC-SEQUENCES FEATURE')
 	# featureDictionnary['specific'] = np.array([[sequence.count(specific_sequence) for specific_sequence in specific_sequences] for sequence in sequences])
@@ -220,6 +236,28 @@ def featurize(sequences,setOfAminoAcids,lengthArray):
 	featureDictionnary['initialSpecific'] = np.array([[ int(specific_sequence in sequence[:50]) for specific_sequence in initial_sequences] for sequence in sequences])
 	featureDictionnary['finalSpecific'] = np.array([[ int(specific_sequence in sequence[-50:]) for specific_sequence in final_sequences] for sequence in sequences])
 
+	print('NES COUNT FEATURE')
+
+	featureDictionnary['NES'] = np.array([[len(re.findall('[L|I|V|F|M][A-Z][A-Z][A-Z][L|I|V|F|M][A-Z][A-Z][L|I|V|F|M][A-Z][L|I|V|F|M]', sequence))] for sequence in sequences])
+	featureDictionnary['InitialNES'] = np.array([[len(re.findall('[L|I|V|F|M][A-Z][A-Z][A-Z][L|I|V|F|M][A-Z][A-Z][L|I|V|F|M][A-Z][L|I|V|F|M]', sequence[:50]))] for sequence in sequences])
+	featureDictionnary['finalNES'] = np.array([[len(re.findall('[L|I|V|F|M][A-Z][A-Z][A-Z][L|I|V|F|M][A-Z][A-Z][L|I|V|F|M][A-Z][L|I|V|F|M]', sequence[-50:]))] for sequence in sequences])
+
+	print('POS LIST FEATURE')
+
+	tempPOS = [re.findall('[K|R|H]*', sequence) for sequence in sequences]
+	featureDictionnary['5POS'] = np.array([[ len([subseq for subseq in tempPOS[i] if len(subseq) == 5])] for i in range(len(sequences))])
+	featureDictionnary['4POS'] = np.array([[ len([subseq for subseq in tempPOS[i] if len(subseq) > 4])] for i in range(len(sequences))])
+	tempInitialPOS = [re.findall('[K|R|H]*', sequence[:50]) for sequence in sequences]
+	featureDictionnary['5InitialPOS'] = np.array([[ len([subseq for subseq in tempInitialPOS[i] if len(subseq) == 5])] for i in range(len(sequences))])
+	featureDictionnary['4InitialPOS'] = np.array([[ len([subseq for subseq in tempInitialPOS[i] if len(subseq) > 4])] for i in range(len(sequences))])
+	tempFinalPOS = [re.findall('[K|R|H]*', sequence[-50:]) for sequence in sequences]
+	featureDictionnary['5FinalPOS'] = np.array([[ len([subseq for subseq in tempFinalPOS[i] if len(subseq) == 5])] for i in range(len(sequences))])
+	featureDictionnary['4FinalPOS'] = np.array([[ len([subseq for subseq in tempFinalPOS[i] if len(subseq) > 4])] for i in range(len(sequences))])
+
+
+	# print('N-TERMINUS SEQUENCE')
+	# tempNTerminus = [re.findall('[V|I|L|M|F|A|C]*', sequence[:50]) for sequence in sequences]
+	# featureDictionnary['NTerminus'] = np.array([[ len([subseq for subseq in tempNTerminus[i] if len(subseq) >= 5])] for i in range(len(sequences))])
 
 	print('TRANSFORMING INTO ARRAY')
 
@@ -280,7 +318,6 @@ if (foldString in args):
 	nFolds = int(args[args.index(foldString)+1])
 
 
-alphaValues = [10**i for i in range(-6,1)]
 ####################### Loading the Data ################################
 
 print('LOADING THE DATA SET')

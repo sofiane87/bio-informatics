@@ -48,16 +48,95 @@ It is however, possible to avoid splitting the problem into two sub-problems by 
 
 Although these methods usually yields better results than the methods presented before, the results obtained are far harder to interpret as these systems behave as \textbf{"black boxes"} and it's quite difficult to interpret what was \textit{learned}. \\
 
-Therefore, The first approach was used in order to ease the analysis of the results and the task was splitted into a \textbf{feature-extraction} task and \textbf{classification} task.
+Therefore, The first approach was used in order to ease the analysis of the results and the task was splitted into a \textbf{feature-extraction} task and \textbf{classification} task. Therefore, in order to indentify what features might be useful to this problem, a research phase was realized where several research papers on the same subject have been studied, and used as a reference to select several features. 
 
-%\enlargethispage{12pt}
+% \enlargethispage{12pt}
+\section{Sequence preprocessing : }
+It seems important to mention that before proceeding the \textbf{feature extraction} phase, it was necessary to preprocess the data due to the presence of unexpected characters : \textbf{U, B, X} in the amino acid sequences. 
+
+\begin{itemize}
+	\item \textbf{X: } Given that "X" refers to "any amino acid" we randomly replace it by a given amino acid among the 20 amino acids
+	\item \textbf{B: } "B" refers to either \textit{asparagine} and \textit{aspartic acid}. It is therefore automatically replaced by one or the other
+	\item \textbf{U: } the "U" amino acid is simply removed from the sequence for lack of a better solution
+
+\end{itemize}
+ 
+ This preprocessing step, will only affect 64 sequences out of more than 9000, therefore these changes are unlikely to heavily influence the results but will allow and easier implementation of the various features.
 
 \section{Feature Extraction}
 
+In terms of Features, three differents types of features can be identified: 
+\begin{itemize}
+ 	\item \textbf{Amino acids composition: } This refers to count or frequency of each amino acid in the sequence to analyse. 
+	\item \textbf{Protein's properties: } This referes to the various chimical and biological properties that a given protein can have such as \textit{aromaticity, hydrophobicity, iso-electric point ...etc}
+	\item \textbf{Subsequence-based features : } This refers to various existing methods that aims to extract relevant discriminative subsequences which \textit{presence or count} will then be used as features to classify the proteins
+\end{itemize}
+
+The goal will then be combine several features from each type in order to optimize the results of the classification. The process through which the features to extract were selected was mainly based on what several research papers on this field advised and recommended. Once all the features were pre-selected and implemented, the final feature selection process was done while attempting classification, by trying to optmize both results and speed. Below you can find all the features that were considered as well as wether or not they were used in the final model. 
+
+\subsection{sequence length: \textbf{Used}}
+The sequence found in the training have a varying length, therefore, it seemed fitting the provide the length of a given sequence as a feature. \\
+This was confirmed by the results obtained after classification using various classifier, all of them providing better results when using this feature 
+
+\subsection{Amino acids Counts: }
+This feature refers to the number of time each amino acid appears in the sequence.
+Given the variability of the length of the sequences, given the raw count for each amino acids seemed unfit as each dimension would heavily vary.
+
+\subsection{Amino acids frequency: \textbf{Used}}
+In order  to fix the problem cited above, we use the frequency instead of the counts was recommended. Indeed, the frequency being a value between 0 and 1, it allows each dimension to be normalized, allowing the model to compare \textbf{amino acid composition} of sequences of various length.
+
+
+\subsection{isoelectric point: \textbf{Used}}
+\textit{The isoelectronic point or isoionic point is the pH at which the amino acid does not migrate in an electric field.} \\
+As presented by \cite{gao05}, \textbf{iso-electric point} is among the top features to use when attempting the predict the subcellular location of a protein.
+
+\subsection{Presence of specific Sequences : N-Grams \textbf{Used}}
+
+As explained in \cite{Saidi2010}, The presence of specific sequences of a specified length as well as the number of appearences can be powerfull features. The goal is then to manage to extract relevant, discriminative features.\\
+to do so two techniques were attempted: 
+\begin{itemize}
+	\item \textbf{tf-idf: } tf-idf is a classic processing alogrithm that allows to extract "relevant" information from a sequence of "words" or "N-Grams" \textit{ie} sequences of characters of length N. For example, for a sequence length or 3, this algorithm allowed us to extract the following sequences to look for : \textbf{['WW','MWW', 'CWW', 'WWM', 'WMW', 'WCW', 'CWM', 'WCM', 'MCW', 'WWH', 'FWW']}
+	\item \textbf{Descriminative Descriptors: } this is another method that was presented in \cite{Saidi2010}, it behaves similarily to tf-idf but use the additional information that several classes exist. [--------------------- TO COMPLETE ------------------------------] 
+\end{itemize}
+
+\subsection{Nuclear Export Signals: \textbf{Used}}
+
+This feature that is presented in \cite{Xua12}, it describes the following pattern as an efficient discriminative pattern : $\phi_{1}-X_3-\phi_{2}-X_2-\phi_{3}-X-\phi_{4}$. Positions $\phi_3$ and $\phi_4$ of this prevalent pattern are dominated by the five traditional hydrophobic residues \textbf{Leu[L], Ile[I],Val[V], Met[M], and Phe[F]}. \\
+This feature did lead to improvements, however they were as significant as expected.
+
+\subsection{Nuclear Localization Signals: \textbf{Used}}
+
+This feature has also been presented in \cite{Xua12}, it refers to the count of subsequences of at least 5 \textbf{positively charged amino acids} \textit{.ie} meaning one of the following : \textbf{lys[K], arg[R], his[H]}.\\
+Again this feature lead to slight improvement over all models.
+
+\subsection{Protein's properties: \textbf{Used}}
+In addition to what was presented above the following properties were attempted as suggested by \cite{gao05}
+\begin{itemize}
+	\item \textbf{Hydrophobicity}
+	\item \textbf{Aromaticity}
+	\item \textbf{Molecular Weight}
+\end{itemize}
+
+\subsection{Begning and End of sequences: }
+Each feature presented above was computed for the \textbf{full sequence} as well as the \textbf{first 50 amino acids} and the \textbf{last 50 amino acids} of each sequence. This aims to identify trends and patterns not only overall but also specific to the begining and the end of the sequences. Indeed, the length of sequences would make it difficult to extract information solely related to the begining of the sequence therefore isolating the most proabably relevant subsequences seems to be a proper way of removing the "noise" due to then length of most amino acid sequences.
 
 
 \begin{methods}
-\section{Methods}
+\section{Classification Methods}
+
+Several classification methods are available, using previous knowledge about \textbf{Machine Learning - Classifcation} problems as well as classifiers referenced by other research papers of this same field. Each classifier, is optimized in order to maximize its efficiency. Using the features presented above, we obtained the following results :
+
+\begin{itemize}
+	\item Logistic Regression Classifier : $65\%$
+	\item Random Forest Classifier : $68.5\%$
+	\item SVM Classifier : $65\%$
+	\item Ridge Regression Classifier : $65\%$
+\end{itemize}
+
+
+
+
+%% ----------------------------------- TEMPLATE -------------------------------
 
 Text Text Text Text Text Text  Text Text Text Text Text Text Text
 Text Text  Text Text Text Text Text Text.
@@ -551,38 +630,21 @@ This work has been supported by the... Text Text  Text Text.\vspace*{-12pt}
 %\bibliography{Document}
 
 
+
+
 \begin{thebibliography}{}
 
-\bibitem[Bofelli {\it et~al}., 2000]{Boffelli03}
-Bofelli,F., Name2, Name3 (2003) Article title, {\it Journal Name}, {\bf 199}, 133-154.
+\bibitem[Saidi {\it et~al}., 2010]{Saidi2010}
+R. Saidi, M. Maddouri and EM. Nguifo (2010) \\
+Protein sequences classification by means of feature extraction with substitution matrices, {\it BMC Bioinformatics}
 
-\bibitem[Bag {\it et~al}., 2001]{Bag01}
-Bag,M., Name2, Name3 (2001) Article title, {\it Journal Name}, {\bf 99}, 33-54.
+\bibitem[Q.-B. Gao {\it et~al}., 2005]{gao05}
+Q-B Gao, Z-Z Wang, C Yan, Y-H Du (2005)\\ 
+Prediction of protein subcellular location using a combined feature of sequence, {\it FEBS Letters}
 
-\bibitem[Yoo \textit{et~al}., 2003]{Yoo03}
-Yoo,M.S. \textit{et~al}. (2003) Oxidative stress regulated genes
-in nigral dopaminergic neurnol cell: correlation with the known
-pathology in Parkinson's disease. \textit{Brain Res. Mol. Brain
-Res.}, \textbf{110}(Suppl. 1), 76--84.
-
-\bibitem[Lehmann, 1986]{Leh86}
-Lehmann,E.L. (1986) Chapter title. \textit{Book Title}. Vol.~1, 2nd edn. Springer-Verlag, New York.
-
-\bibitem[Crenshaw and Jones, 2003]{Cre03}
-Crenshaw, B.,III, and Jones, W.B.,Jr (2003) The future of clinical
-cancer management: one tumor, one chip. \textit{Bioinformatics},
-doi:10.1093/bioinformatics/btn000.
-
-\bibitem[Auhtor \textit{et~al}. (2000)]{Aut00}
-Auhtor,A.B. \textit{et~al}. (2000) Chapter title. In Smith, A.C.
-(ed.), \textit{Book Title}, 2nd edn. Publisher, Location, Vol. 1, pp.
-???--???.
-
-\bibitem[Bardet, 1920]{Bar20}
-Bardet, G. (1920) Sur un syndrome d'obesite infantile avec
-polydactylie et retinite pigmentaire (contribution a l'etude des
-formes cliniques de l'obesite hypophysaire). PhD Thesis, name of
-institution, Paris, France.
+\bibitem[Xua {\it et~al}., 2012]{Xua12}
+D Xua, A Farmera, G Colletta, N V. Grishinb, Y M Chooka (2012)\\
+Sequence and structural analyses of nuclear export signals in the NESdb database , {\it MBoC}
 
 \end{thebibliography}
 \end{document}

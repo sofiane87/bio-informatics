@@ -49,7 +49,8 @@ def loadFastaFiles(fileList):
 		for fasta in fasta_sequences:
 			seqName, sequence = fasta.id, str(fasta.seq)
 
-			sequence = re.sub('X|U', '', sequence)
+			sequence = re.sub('X', ["A", "R", "N", "D", "C", "Q", "E", "G", "H", "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V" ][np.random.randint(0,20)], sequence)
+			sequence = re.sub('U', '', sequence)
 			sequence = re.sub('B', ['N', 'D'][np.random.randint(0,2)], sequence)
 
 			setOfAminoAcids = list(set(setOfAminoAcids).union(set(sequence)))
