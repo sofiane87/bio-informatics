@@ -22,4 +22,4 @@ The code contains three files :
 
 ## The Results :
 
-a report in pdf format is available to better understand the nature of the work that was completed : [**report_ucabsm1.pdf** link](https://github.com/sofiane87/bio-informatics/report-ucabsm1.pdf)
+a report in pdf format is available to better understand the nature of the work that was completed : [**report_ucabsm1.pdf**](https://github.com/sofiane87/bio-informatics/report-ucabsm1.pdf)
