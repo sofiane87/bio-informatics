@@ -16,6 +16,6 @@ The goal of this assignment is to provide an automated system that is able to cl
 
 The code contains three files :
 
-*	**main.py : ** This file contains most of the work and all attempted machine learning techniques aside from RNNs
-*	**temp_rnn.py : ** This file contains all attempts related to RNNs [both LSTM and GRU cells have been attempted]
-*	**tf_idf.py : ** This file contains a preprocessing step where various interesting key words were identified using metrics such as **tf-idf** score
+*	*main.py :* This file contains most of the work and all attempted machine learning techniques aside from RNNs
+*	*temp_rnn.py :* This file contains all attempts related to RNNs [both LSTM and GRU cells have been attempted]
+*	*tf_idf.py :* This file contains a preprocessing step where various interesting key words were identified using metrics such as **tf-idf** score
